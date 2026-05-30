@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: valiantdb
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/valiantdb
+      - SECRET_KEY=change_this_to_a_secret
+      - ADMIN_PASSWORD=change_admin_password
+      - FLASK_ENV=production
+      - PORT=5000
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+volumes:
+  db_data:
