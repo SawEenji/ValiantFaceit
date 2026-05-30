@@ -20,7 +20,7 @@ jobs:
         env:
           RAILWAY_API_KEY: ${{ secrets.RAILWAY_API_KEY }}
         run: |
-          railway login --apiKey $RAILWAY_API_KEY
+          railway login --token $RAILWAY_API_KEY
       - name: Deploy to Railway
         run: |
           railway up --yes
