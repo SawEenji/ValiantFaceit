@@ -15,7 +15,7 @@ jobs:
           node-version: '18'
       - name: Install Railway CLI
         run: |
-          npm i -g railway
+          npm i -g @railway/cli
       - name: Login to Railway
         env:
           RAILWAY_API_KEY: ${{ secrets.RAILWAY_API_KEY }}
