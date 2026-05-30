@@ -20,4 +20,4 @@ jobs:
         env:
           RAILWAY_API_KEY: ${{ secrets.RAILWAY_API_KEY }}
         run: |
-          railway up --yes
+          railway up --ci --json
