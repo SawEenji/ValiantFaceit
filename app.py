@@ -190,7 +190,7 @@ def get_online_count():
     five_min_ago = datetime.utcnow() - timedelta(minutes=5)
     return User.query.filter(User.last_seen > five_min_ago).count()
 
-def open_case(user):
+def open_case_for_user(user):
     """Открытие кейса за 150 VFP с шансами из скриншота"""
     if user.vfp < 150:
         return None, "Недостаточно VFP! Нужно 150."
@@ -362,7 +362,7 @@ def init_db():
             ann = Announcement(
                 title='Добро пожаловать в ValiantFaceit!',
                 content='Открывайте Valiant Case, покупайте рамки, выполняйте миссии и повышайте свой уровень!',
-                created_by=1
+                created_by=admin.id
             )
             db.session.add(ann)
             db.session.commit()
@@ -664,14 +664,15 @@ def dashboard():
     level, level_name, level_color = get_level(user.vfp)
     user_frame = None
     if user.avatar_frame != 'default':
-        frame = AvatarFrame.query.filter_by(name=user.avatar_frame).first()
-        if frame:
-            user_frame = frame
+        selected_frame = AvatarFrame.query.filter_by(name=user.avatar_frame).first()
+        if selected_frame:
+            user_frame = selected_frame
     
+    frame_style = user_frame.css_style if user_frame else ''
     content = f'''
         <h1>👤 {user.username}</h1>
         <div class="card" style="text-align:center">
-            <div style="width:100px;height:100px;border-radius:50%;margin:0 auto 10px;background:#5b47fb;display:flex;align-items:center;justify-content:center;font-size:40px" {'style="'+frame.css_style+'"' if user_frame else ''}>
+            <div style="width:100px;height:100px;border-radius:50%;margin:0 auto 10px;background:#5b47fb;display:flex;align-items:center;justify-content:center;font-size:40px;{frame_style}">
                 {user.username[0].upper()}
             </div>
             <p><strong>🎮</strong> {user.valorant_nick}#{user.valorant_tag}</p>
@@ -753,7 +754,7 @@ def case():
 @login_required
 def open_case():
     user = User.query.get(session['user_id'])
-    reward, message = open_case(user)
+    reward, message = open_case_for_user(user)
     if reward is None:
         flash(message, 'error')
     else:
@@ -899,13 +900,22 @@ def join_lobby(lobby_id):
     if LobbyMember.query.filter_by(lobby_id=lobby_id, user_id=user.id).first():
         flash('Вы уже в лобби!', 'warning')
         return redirect(url_for('lobbies'))
-    if LobbyMember.query.filter_by(lobby_id=lobby_id).count() >= lobby.team_size:
+    current_members = LobbyMember.query.filter_by(lobby_id=lobby_id).count()
+    if current_members >= lobby.team_size:
+        lobby.is_full = True
+        db.session.commit()
         flash('Лобби полно!', 'error')
         return redirect(url_for('lobbies'))
     db.session.add(LobbyMember(lobby_id=lobby_id, user_id=user.id))
+    if current_members + 1 >= lobby.team_size:
+        lobby.is_full = True
     db.session.commit()
     flash('Вы вступили!', 'success')
     return redirect(url_for('lobbies'))
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'ok'})
 
 @app.route('/admin_panel')
 @login_required

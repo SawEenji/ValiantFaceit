@@ -13,6 +13,12 @@ docker-compose up --build -d
 
 Сервис будет доступен по порту 5000.
 
+Тестирование:
+
+```bash
+python -m pytest -q tests/test_health.py
+```
+
 Деплой на Railway (автоматически при push):
 
 1. В репозитории на GitHub добавьте секрет `RAILWAY_API_KEY` (Settings → Secrets).
